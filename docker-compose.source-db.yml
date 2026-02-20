@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: jak-icms-postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-debezium}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-debezium}
+      POSTGRES_DB: ${POSTGRES_DB:-inventory}
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  postgres_data:

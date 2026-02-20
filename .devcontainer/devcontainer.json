@@ -1,0 +1,27 @@
+{
+  "name": "jak-icms-dev",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "workspace",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "root",
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml",
+        "zainchen.json",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "GitHub.vscode-pull-request-github",
+        "OpenAI.chatgpt"
+      ]
+    }
+  },
+  "postCreateCommand": "bash -lc 'echo \"tool versions:\"; curl --version | head -n 1; jq --version; kcat -V | head -n 1; psql --version; docker --version; kubectl version --client --output=yaml | head -n 5; gh --version | head -n 1'"
+}
