@@ -6,10 +6,12 @@ services:
       context: .
       dockerfile: .devcontainer/Dockerfile
     container_name: jak-icms-workspace
-    working_dir: /workspace
-    command: sleep infinity
+    working_dir: /home/devuser/workspace
+    stdin_open: true
+    tty: true
+    command: /bin/bash
     volumes:
-      - .:/workspace:cached
+      - .:/home/devuser/workspace:cached
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       redpanda:
@@ -73,7 +75,7 @@ services:
     command: ["--config", "/etc/vector/vector.yaml"]
 
   debezium-connect:
-    image: debezium/connect:2.7
+    image: ${DEBEZIUM_CONNECT_IMAGE:-quay.io/debezium/connect:3.0.1.Final}
     container_name: jak-icms-debezium-connect
     depends_on:
       redpanda:
@@ -101,7 +103,7 @@ services:
       retries: 20
 
   debezium-ui:
-    image: debezium/debezium-ui:2.7
+    image: ${DEBEZIUM_UI_IMAGE:-debezium/debezium-ui:latest}
     container_name: jak-icms-debezium-ui
     depends_on:
       debezium-connect:

@@ -1,18 +1,22 @@
-# Dev Environment (VS Code Dev Container + Docker Compose)
+# Dev Environment Guide (VS Code Dev Container + Docker Compose)
 
-이 저장소는 VS Code Dev Container와 Docker Compose를 이용해 아래 구성요소를 개발환경으로 제공합니다.
+이 저장소는 데이터 파이프라인 개발용 기본 스택을 제공합니다.
 
-- Redpanda
+## 구성 요소
+
+- Redpanda (Kafka 호환 브로커)
 - Vector
 - Debezium Connect
 - Debezium UI
-- PostgreSQL 소스 DB
+- PostgreSQL (소스 DB)
 
-## 요구사항
+## 사전 요구사항
 
 - Docker Engine
 - Docker Compose v2
-- VS Code + Dev Containers 확장
+- VS Code
+- VS Code Dev Containers extension
+- 인터넷 연결 (Docker image pull)
 
 ## 빠른 시작
 
@@ -22,66 +26,56 @@
 cp .env.example .env
 ```
 
-2. 기본 서비스 기동 (Redpanda + Vector + Debezium + PostgreSQL)
+2. 기본 서비스 기동
 
 ```bash
 docker compose up -d
 ```
 
-3. VS Code에서 `Reopen in Container` 실행
+3. VS Code에서 `Reopen in Container`
 
-선택: 필요 시 오버레이 파일(`docker-compose.source-db.yml`)을 별도 실험용으로 함께 사용할 수 있습니다.
+## 환경 변수 설명
 
-## Dev Container 기본 확장
+- `REDPANDA_KAFKA_PORT` (기본: `19092`)
+- `DEBEZIUM_CONNECT_PORT` (기본: `8083`)
+- `DEBEZIUM_UI_PORT` (기본: `8080`)
+- `POSTGRES_PORT` (기본: `5432`)
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- `DEBEZIUM_CONNECT_IMAGE`
+- `DEBEZIUM_UI_IMAGE`
 
-- `ms-azuretools.vscode-docker`
-- `redhat.vscode-yaml`
-- `zainchen.json`
-- `eamodio.gitlens`
-- `mhutchie.git-graph`
-- `GitHub.vscode-pull-request-github`
-- `OpenAI.chatgpt`
+## 기본 서비스 엔드포인트
 
-`Reopen in Container` 이후 위 확장이 자동 설치됩니다.
-
-## 서비스 엔드포인트
-
-- Redpanda Kafka (host): `localhost:${REDPANDA_KAFKA_PORT:-19092}`
-- Redpanda Admin API: `localhost:9644`
+- Redpanda Kafka: `localhost:${REDPANDA_KAFKA_PORT:-19092}`
+- Redpanda Admin: `localhost:9644`
 - Debezium Connect API: `localhost:${DEBEZIUM_CONNECT_PORT:-8083}`
 - Debezium UI: `localhost:${DEBEZIUM_UI_PORT:-8080}`
 - PostgreSQL: `localhost:${POSTGRES_PORT:-5432}`
 
 ## 동작 검증
 
-1. 컨테이너 상태 확인
+1. Compose 상태 확인
 
 ```bash
 docker compose ps
 ```
 
-2. Debezium Connect 확인
+2. Debezium Connect API 확인
 
 ```bash
 curl -s http://localhost:${DEBEZIUM_CONNECT_PORT:-8083}/connectors
 ```
 
-3. Vector 로그가 Redpanda 토픽으로 들어오는지 확인 (`kcat` 필요)
-
-```bash
-kcat -b localhost:${REDPANDA_KAFKA_PORT:-19092} -t ${REDPANDA_TOPIC_VECTOR:-vector.logs} -C -o -5 -e
-```
-
-4. VS Code 확장 확인
-
-- `OpenAI.chatgpt`
-- `GitHub.vscode-pull-request-github`
-- `mhutchie.git-graph`
-
-5. PostgreSQL 샘플 데이터 확인
+3. PostgreSQL 샘플 데이터 확인
 
 ```bash
 psql "postgresql://${POSTGRES_USER:-debezium}:${POSTGRES_PASSWORD:-debezium}@localhost:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-inventory}" -c "SELECT * FROM inventory.customers;"
+```
+
+4. Vector -> Redpanda 토픽 확인 (`kcat` 필요)
+
+```bash
+kcat -b localhost:${REDPANDA_KAFKA_PORT:-19092} -t ${REDPANDA_TOPIC_VECTOR:-vector.logs} -C -o -5 -e
 ```
 
 ## Debezium Connector 등록 예시
@@ -112,3 +106,21 @@ curl -X POST http://localhost:${DEBEZIUM_CONNECT_PORT:-8083}/connectors \
 ```bash
 docker compose down
 ```
+
+## 트러블슈팅
+
+### 1) Dev Container에서 docker 명령이 실패하는 경우
+
+- `/var/run/docker.sock` 마운트 상태 확인
+- Docker daemon 상태 확인
+
+### 2) 포트 충돌 의심 시
+
+```bash
+docker compose ps
+```
+
+### 3) 이미지 pull 실패/네트워크 이슈
+
+- 사내 프록시/방화벽 정책 점검
+- Docker Hub/Quay 접근 가능 여부 확인

@@ -4,9 +4,9 @@
     "../docker-compose.yml"
   ],
   "service": "workspace",
-  "workspaceFolder": "/workspace",
+  "workspaceFolder": "/home/devuser/workspace",
   "shutdownAction": "stopCompose",
-  "remoteUser": "root",
+  "remoteUser": "devuser",
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
@@ -23,5 +23,6 @@
       ]
     }
   },
+  "postStartCommand": "bash -lc 'if [ -S /var/run/docker.sock ]; then DOCKER_GID=$(stat -c %g /var/run/docker.sock); if ! getent group \"${DOCKER_GID}\" >/dev/null; then sudo groupadd --gid \"${DOCKER_GID}\" docker-host; fi; DOCKER_GROUP=$(getent group \"${DOCKER_GID}\" | cut -d: -f1); if ! id -nG \"${USER}\" | tr \" \" \"\\n\" | grep -qx \"${DOCKER_GROUP}\"; then sudo usermod -aG \"${DOCKER_GROUP}\" \"${USER}\"; echo \"Added ${USER} to ${DOCKER_GROUP}. Reopen terminal to apply group membership.\"; fi; fi'",
   "postCreateCommand": "bash -lc 'echo \"tool versions:\"; curl --version | head -n 1; jq --version; kcat -V | head -n 1; psql --version; docker --version; kubectl version --client --output=yaml | head -n 5; gh --version | head -n 1'"
 }
